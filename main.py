@@ -32,32 +32,43 @@ instead of the laugh).
 
 import os
 
-EXCUSE = (
-    "Sorry, can't come in \u2014 my smartwatch says I slept 14 hours, "
-    "ran a marathon, and died twice, and honestly I believe it."
-)
+# The excuse is assembled from parts so each clause can be checked
+# on its own; the joined result is the exact entry text.
+EXCUSE_PARTS = [
+    "Sorry, can't come in ",
+    "\u2014 my smartwatch says I slept 14 hours, ",
+    "ran a marathon, and died twice, ",
+    "and honestly I believe it.",
+]
 
 MAX_CHARS = 200
 OUTPUT_PATH = "/output/entry.txt"
 
 
-def check_excuse(excuse: str) -> str:
-    """Return the excuse after enforcing the entry rules."""
-    text = excuse.strip()
-    if not text:
+def build_excuse(parts) -> str:
+    """Join the excuse parts into the single-line entry text."""
+    joined = "".join(parts).strip()
+    if not joined:
         raise ValueError("entry must not be empty")
-    if len(text) > MAX_CHARS:
-        raise ValueError(f"entry is {len(text)} chars, limit is {MAX_CHARS}")
-    if "\n" in text or "\r" in text:
+    if "\n" in joined or "\r" in joined:
         raise ValueError("entry must be a single line")
-    return text
+    if len(joined) > MAX_CHARS:
+        raise ValueError(f"entry is {len(joined)} chars, limit is {MAX_CHARS}")
+    return joined
+
+
+def write_entry(text: str, path: str) -> None:
+    """Write the validated excuse to the output path."""
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(text)
 
 
 def main() -> None:
-    excuse = check_excuse(EXCUSE)
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write(excuse)
+    excuse = build_excuse(EXCUSE_PARTS)
+    write_entry(excuse, OUTPUT_PATH)
 
 
 if __name__ == "__main__":
